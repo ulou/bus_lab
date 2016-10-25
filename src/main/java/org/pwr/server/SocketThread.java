@@ -24,17 +24,17 @@ import static org.pwr.algorithm.JsonHandler.writeJson;
 /**
  * Created by mkonczyk on 2016-10-25.
  */
-public class SocketThread implements Runnable{
+public class SocketThread implements Runnable {
 
     protected Socket clientSocket = null;
-    protected String serverText   = null;
+    protected String serverText = null;
     private RequestValues step1;
     private BigInteger b, secret;
     private boolean running = true;
     private EncryptionType encryptionType = EncryptionType.none;
     private Gson gson;
 
-    public SocketThread(Socket clientSocket, String serverText)  {
+    public SocketThread(Socket clientSocket, String serverText) {
         System.out.println("Connection successful.");
         this.clientSocket = clientSocket;
         this.serverText = serverText;
@@ -45,31 +45,31 @@ public class SocketThread implements Runnable{
 
     public void run() {
         try {
-            InputStream input  = clientSocket.getInputStream();
+            InputStream input = clientSocket.getInputStream();
             OutputStream output = clientSocket.getOutputStream();
             waitForKeys(input);
-            sendKeys(output,step1);
+            sendKeys(output, step1);
             RequestValues step2A = sendBAndWaitForA(input, output);
             calculateSecret(step2A);
             waitForMessagesOrControl(input, output);
 
-        } catch(SocketException exception) {
+        } catch (SocketException exception) {
             System.out.println("Socket stopped, client has been disconnected.");
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     private void calculateSecret(RequestValues step2A) {
-        secret=step2A.getA().modPow(b,step1.getP());
+        secret = step2A.getA().modPow(b, step1.getP());
         System.out.println("Server side secret: " + secret);
     }
 
     private RequestValues sendBAndWaitForA(InputStream input, OutputStream output) throws SocketException {
-        RequestValues step2A=null;
-        RequestValues step2B= new RequestValues(step1.getG().modPow(b,step1.getP()));
-        while (step2A==null){
-            step2A=step2(input,output,gson.toJson(step2B));
+        RequestValues step2A = null;
+        RequestValues step2B = new RequestValues(step1.getG().modPow(b, step1.getP()));
+        while (step2A == null) {
+            step2A = step2(input, output, gson.toJson(step2B));
         }
         return step2A;
     }
@@ -79,7 +79,7 @@ public class SocketThread implements Runnable{
         b = BigInteger.valueOf(generator.nextInt(40));
     }
 
-    private void generateKeys(){
+    private void generateKeys() {
         AlgorithmParameterGenerator paramGen = null;
         try {
             paramGen = AlgorithmParameterGenerator.getInstance("DH");
@@ -94,12 +94,13 @@ public class SocketThread implements Runnable{
         }
 
     }
-    public void waitForKeys(InputStream input){
-        System.out.println("Start Odczytu");
-        while(true){
+
+    public void waitForKeys(InputStream input) {
+        System.out.println("Ready");
+        while (true) {
             try {
-                if((gson.fromJson(readJsonAndSendOne(input,null,null),Request.class)).getRequest().equals("keys")) {
-                    System.out.println("Poproszono o klucze");
+                if ((gson.fromJson(readJsonAndSendOne(input, null, null), Request.class)).getRequest().equals("keys")) {
+                    System.out.println("Sending request for keys...");
                     break;
                 }
             } catch (SocketException e) {
@@ -108,17 +109,17 @@ public class SocketThread implements Runnable{
         }
     }
 
-    public void sendKeys(OutputStream output, RequestValues step1){
-        writeJson(output,gson.toJson(step1));
+    public void sendKeys(OutputStream output, RequestValues step1) {
+        writeJson(output, gson.toJson(step1));
     }
 
-    public RequestValues step2(InputStream input, OutputStream outputStream,String msg) throws SocketException{
-        String json = readJsonAndSendOne(input,outputStream,msg);
-        if(json.isEmpty())
+    public RequestValues step2(InputStream input, OutputStream outputStream, String msg) throws SocketException {
+        String json = readJsonAndSendOne(input, outputStream, msg);
+        if (json.isEmpty())
             return null;
         System.out.println("Received : " + json.toString());
         RequestValues step2A = gson.fromJson(json.toString(), RequestValues.class);
-        if(step2A!=null)
+        if (step2A != null)
             return step2A;
 
         return null;
@@ -126,14 +127,14 @@ public class SocketThread implements Runnable{
     }
 
     private void waitForMessagesOrControl(InputStream input, OutputStream output) throws SocketException {
-        while(running){
-            String msg = readJsonAndSendOne(input,null,null);
-            System.out.println("Dostalem : " +msg);
-            Message message =  gson.fromJson(msg, Message.class);
-            if(message==null||message.getMsg()==null){
+        while (running) {
+            String msg = readJsonAndSendOne(input, null, null);
+            System.out.println("Received : " + msg);
+            Message message = gson.fromJson(msg, Message.class);
+            if (message == null || message.getMsg() == null) {
                 handleControlMessage(msg);
 
-            }else{
+            } else {
                 handleMessage(output, message);
 
             }
@@ -141,24 +142,22 @@ public class SocketThread implements Runnable{
     }
 
     private void handleMessage(OutputStream output, Message message) {
-        message.setMsg(decryptMessage(encryptionType,message.getMsg(),secret.intValue()));
-        System.out.println("Przyszlo " +message+"\n----------------------------------");
-        message.setMsg(encryptMessage(encryptionType,message.getMsg(),secret.intValue()));
-        System.out.println("Po kodowaniu " +message+"\n----------------------------------");
-        writeJson(output,gson.toJson(message));
+        message.setMsg(decryptMessage(encryptionType, message.getMsg(), secret.intValue()));
+        System.out.println("Received " + message + "\n----------------------------------");
+        message.setMsg(encryptMessage(encryptionType, message.getMsg(), secret.intValue()));
+        System.out.println("Encrypted " + message + "\n----------------------------------");
+        writeJson(output, gson.toJson(message));
     }
 
     private void handleControlMessage(String msg) {
         EncryptionHandler encryptionHandler = gson.fromJson(msg, EncryptionHandler.class);
-        if(encryptionHandler!=null && encryptionHandler.getEncryptionType()!=null){
+        if (encryptionHandler != null && encryptionHandler.getEncryptionType() != null) {
             encryptionType = encryptionHandler.getEncryptionType();
-            System.out.println("Zmiana kodowania : "+ encryptionType);
-        }else{
-            System.out.println("Blad");
+            System.out.println("EncyptionType changed to  " + encryptionType);
+        } else {
+            System.out.println("Something went wrong!");
         }
     }
-
-
 
 
 }

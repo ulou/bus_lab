@@ -42,19 +42,19 @@ public class Client {
             RequestValues step2B = sendMyAValueAndWaitForB(output, input);
             calculateSecret(step2B);
         } catch (Exception e) {
-            System.out.print("Whoops! It didn't work!\n");
+            System.out.print("Something went wrong.!\n");
             e.printStackTrace();
         }
     }
 
     private static void calculateSecret(RequestValues step2B) {
         secret = step2B.getB().modPow(a, p);
-        System.out.println("Secret u clienta: " + secret);
+        System.out.println("Client secret: " + secret);
     }
 
     private static void generateMyAValue() {
         Random generator = new Random();
-        a = BigInteger.valueOf(generator.nextInt(40));
+        a = BigInteger.valueOf(generator.nextInt(16));
     }
 
     public static void sendRequestForKeys(OutputStream outputStream, InputStream inputStream) {
@@ -65,7 +65,7 @@ public class Client {
             RequestValues step1 = new Gson().fromJson(receivedJson, RequestValues.class);
             p = step1.getP();
             g = step1.getG();
-            System.out.println("DOSTALEM P " + p + " G : " + g);
+            System.out.println("Received: P " + p + " G : " + g);
         } catch (SocketException e) {
             e.printStackTrace();
         }
@@ -88,12 +88,12 @@ public class Client {
             Message receivedMessage = gson.fromJson(json, Message.class);
             receivedMessage.setMsg(decryptMessage(encoding, receivedMessage.getMsg(), secret.intValue()));
             if (receivedMessage.getMsg().isEmpty()) {
-                return "nic nie odebrano";
+                return "Nothing received";
             }
             return receivedMessage.toString();
         } catch (Exception e) {
             e.printStackTrace();
-            return "wystąpił błąd";
+            return "Something went wrong!";
         }
     }
 }

@@ -7,7 +7,7 @@ import java.net.Socket;
 /**
  * Created by mkonczyk on 2016-10-25.
  */
-public class Server implements Runnable{
+public class Server implements Runnable {
     protected int serverPort;
     protected ServerSocket serverSocket = null;
     protected boolean isStopped = false;
@@ -39,7 +39,6 @@ public class Server implements Runnable{
     }
 
 
-
     public synchronized void stop() {
         this.isStopped = true;
         try {
@@ -53,7 +52,7 @@ public class Server implements Runnable{
         try {
             this.serverSocket = new ServerSocket(this.serverPort);
         } catch (IOException e) {
-            throw new RuntimeException("Cannot open port"+serverPort, e);
+            throw new RuntimeException("Cannot open port" + serverPort, e);
         }
     }
 
