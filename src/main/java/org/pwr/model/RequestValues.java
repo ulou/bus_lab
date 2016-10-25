@@ -6,7 +6,7 @@ import java.math.BigInteger;
  * Created by mkonczyk on 2016-10-25.
  */
 public class RequestValues {
-    BigInteger a, p, g;
+    BigInteger a, b, p, g;
 
     public RequestValues() {
     }
@@ -18,6 +18,22 @@ public class RequestValues {
     public RequestValues(BigInteger p, BigInteger g) {
         this.p = p;
         this.g = g;
+    }
+
+    public BigInteger getA() {
+        return a;
+    }
+
+    public void setA(BigInteger q) {
+        this.a = a;
+    }
+
+    public BigInteger getB() {
+        return b;
+    }
+
+    public void setB(BigInteger b) {
+        this.b = b;
     }
 
     public BigInteger getP() {
@@ -36,11 +52,5 @@ public class RequestValues {
         this.g = g;
     }
 
-    public BigInteger getA() {
-        return a;
-    }
 
-    public void setA(BigInteger q) {
-        this.a = a;
-    }
 }
