@@ -48,7 +48,8 @@ public class Client {
     }
 
     private static void calculateSecret(RequestValues step2B) {
-        secret = step2B.getB().modPow(a, p);
+//        step2B.setB(a); B sie nie ustawia
+        secret = step2B.getB().modPow(a, p); // whats wrong here?
         System.out.println("Client secret: " + secret);
     }
 
@@ -65,7 +66,7 @@ public class Client {
             RequestValues step1 = new Gson().fromJson(receivedJson, RequestValues.class);
             p = step1.getP();
             g = step1.getG();
-            System.out.println("Received: P " + p + " G : " + g);
+            System.out.println("Received: \nP " + p + "\nG : " + g);
         } catch (SocketException e) {
             e.printStackTrace();
         }

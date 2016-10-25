@@ -96,7 +96,6 @@ public class SocketThread implements Runnable {
     }
 
     public void waitForKeys(InputStream input) {
-        System.out.println("Ready");
         while (true) {
             try {
                 if ((gson.fromJson(readJsonAndSendOne(input, null, null), Request.class)).getRequest().equals("keys")) {
