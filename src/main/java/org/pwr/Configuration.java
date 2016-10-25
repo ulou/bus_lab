@@ -5,4 +5,5 @@ package org.pwr;
  */
 public class Configuration {
     public static int PORT = 6789;
+    public static String HOSTNAME = "localhost";
 }
