@@ -7,7 +7,19 @@ import java.util.Base64;
 /**
  * Created by mkonczyk on 2016-10-25.
  */
+
+/**
+ * Class is responsible for encrypting and decrypting messages using basic algorithms.
+ */
 public class Encryption {
+    /**
+     * Method resposible for encrypting message
+     *
+     * @param encryptionType encryption type, instance of EncryptionType enum
+     * @param message        message
+     * @param secret         secret code
+     * @return encrypted String using Base64 and caesar/xor algorithm
+     */
     public static String encryptMessage(EncryptionType encryptionType, String message, Integer secret) {
         message = message.toLowerCase();
         switch (encryptionType) {
@@ -23,6 +35,14 @@ public class Encryption {
         return new String(Base64.getEncoder().encode(message.getBytes()));
     }
 
+    /**
+     *  Method resposible for decrypting message
+     *
+     * @param  encryptionType  encryption type, instance of EncryptionType enum
+     * @param  message message
+     * @param  secret secret code
+     * @return decrypted message of Base64 and caesar/xor algorithm
+     */
     public static String decryptMessage(EncryptionType encryptionType, String message, Integer secret) {
         message = new String(Base64.getDecoder().decode(message.getBytes()));
         switch (encryptionType) {
@@ -38,6 +58,13 @@ public class Encryption {
         return message;
     }
 
+    /**
+     *  Implementation of xor algorithm
+     *
+     * @param  a array of bytes
+     * @param  key algorithm key
+     * @return encrypted or decrypted message
+     */
     private static byte[] xorWithKey(byte[] a, byte[] key) {
         byte[] out = new byte[a.length];
         for (int i = 0; i < a.length; i++) {
@@ -47,6 +74,12 @@ public class Encryption {
         return out;
     }
 
+    /**
+     *  Method that changing integer into byte array
+     *
+     * @param  value integer value
+     * @return bytes array
+     */
     public static final byte[] intToByteArray(int value) {
         return new byte[]{
                 (byte) (value >>> 24),
@@ -55,6 +88,13 @@ public class Encryption {
                 (byte) value};
     }
 
+    /**
+     *  Implementation of caesar cipher algorithm
+     *
+     * @param  message message
+     * @param  shift algorithm shift
+     * @return encrypted or decrypted message
+     */
     private static String caesar(String message, int shift) {
         char[] buffer = message.toCharArray();
         for (int i = 0; i < buffer.length; i++) {
