@@ -18,7 +18,7 @@ import java.util.Random;
 
 import static org.pwr.algorithm.Encryption.decryptMessage;
 import static org.pwr.algorithm.Encryption.encryptMessage;
-import static org.pwr.algorithm.JsonHandler.readJsonAndSendOne;
+import static org.pwr.algorithm.JsonHandler.readJsonAndSendAnswer;
 import static org.pwr.algorithm.JsonHandler.writeJson;
 
 /**
@@ -67,7 +67,7 @@ public class SocketThread implements Runnable {
 
     private RequestValues sendBAndWaitForA(InputStream input, OutputStream output) throws SocketException {
         RequestValues step2A = null;
-        RequestValues step2B = new RequestValues(step1.getG().modPow(b, step1.getP()));
+        RequestValues step2B = new RequestValues(step1.getG().modPow(b, step1.getP()), true);
         while (step2A == null) {
             step2A = step2(input, output, gson.toJson(step2B));
         }
@@ -98,7 +98,7 @@ public class SocketThread implements Runnable {
     public void waitForKeys(InputStream input) {
         while (true) {
             try {
-                if ((gson.fromJson(readJsonAndSendOne(input, null, null), Request.class)).getRequest().equals("keys")) {
+                if ((gson.fromJson(readJsonAndSendAnswer(input, null, null), Request.class)).getRequest().equals("keys")) {
                     System.out.println("Sending request for keys...");
                     break;
                 }
@@ -113,7 +113,7 @@ public class SocketThread implements Runnable {
     }
 
     public RequestValues step2(InputStream input, OutputStream outputStream, String msg) throws SocketException {
-        String json = readJsonAndSendOne(input, outputStream, msg);
+        String json = readJsonAndSendAnswer(input, outputStream, msg);
         if (json.isEmpty())
             return null;
         System.out.println("Received : " + json.toString());
@@ -127,7 +127,7 @@ public class SocketThread implements Runnable {
 
     private void waitForMessagesOrControl(InputStream input, OutputStream output) throws SocketException {
         while (running) {
-            String msg = readJsonAndSendOne(input, null, null);
+            String msg = readJsonAndSendAnswer(input, null, null);
             System.out.println("Received : " + msg);
             Message message = gson.fromJson(msg, Message.class);
             if (message == null || message.getMsg() == null) {
@@ -142,9 +142,12 @@ public class SocketThread implements Runnable {
 
     private void handleMessage(OutputStream output, Message message) {
         message.setMsg(decryptMessage(encryptionType, message.getMsg(), secret.intValue()));
-        System.out.println("Received " + message + "\n----------------------------------");
+        System.out.println("------------------------------------");
+        System.out.println("Received: \n" + message);
         message.setMsg(encryptMessage(encryptionType, message.getMsg(), secret.intValue()));
-        System.out.println("Encrypted " + message + "\n----------------------------------");
+        System.out.println("Encrypted: \n" + message);
+        System.out.println("------------------------------------");
+
         writeJson(output, gson.toJson(message));
     }
 
@@ -155,6 +158,7 @@ public class SocketThread implements Runnable {
             System.out.println("EncyptionType changed to  " + encryptionType);
         } else {
             System.out.println("Something went wrong!");
+            this.running = false;
         }
     }
 

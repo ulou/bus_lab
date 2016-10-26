@@ -11,8 +11,11 @@ public class RequestValues {
     public RequestValues() {
     }
 
-    public RequestValues(BigInteger a) {
-        this.a = a;
+    public RequestValues(BigInteger a, boolean scratch) {
+        if (scratch)
+            this.b = a;
+        else
+            this.a = a;
     }
 
     public RequestValues(BigInteger p, BigInteger g) {

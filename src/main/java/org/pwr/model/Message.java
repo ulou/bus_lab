@@ -4,12 +4,12 @@ package org.pwr.model;
  * Created by mkonczyk on 2016-10-25.
  */
 public class Message {
+    private String message;
     private String from;
-    private String msg;
 
-    public Message(String from, String msg) {
+    public Message(String message, String from) {
         this.from = from;
-        this.msg = msg;
+        this.message = message;
     }
 
     public String getFrom() {
@@ -21,15 +21,15 @@ public class Message {
     }
 
     public String getMsg() {
-        return msg;
+        return message;
     }
 
-    public void setMsg(String msg) {
-        this.msg = msg;
+    public void setMsg(String message) {
+        this.message = message;
     }
 
     @Override
     public String toString() {
-        return (from + ": " + msg);
+        return (from + ": " + message);
     }
 }

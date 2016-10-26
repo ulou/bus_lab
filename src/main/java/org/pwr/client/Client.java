@@ -16,18 +16,15 @@ import java.util.Random;
 import static org.pwr.Configuration.HOSTNAME;
 import static org.pwr.Configuration.PORT;
 import static org.pwr.algorithm.Encryption.decryptMessage;
-import static org.pwr.algorithm.JsonHandler.readJsonAndSendOne;
+import static org.pwr.algorithm.Encryption.encryptMessage;
+import static org.pwr.algorithm.JsonHandler.readJsonAndSendAnswer;
 
 /**
  * Created by mkonczyk on 2016-10-25.
  */
 public class Client {
-    public static BigInteger p;
-    public static BigInteger g;
-    public static BigInteger a;
-    public static BigInteger A;
-    private static BigInteger secret;
-    private static EncryptionType encoding = EncryptionType.none;
+    public static BigInteger p, g, a, A, secret;
+    private static EncryptionType encryptionType = EncryptionType.none;
     private static Gson gson = new Gson();
 
     public static void main(String args[]) {
@@ -35,12 +32,38 @@ public class Client {
             Socket skt = new Socket(HOSTNAME, PORT);
             InputStream input = skt.getInputStream();
             OutputStream output = skt.getOutputStream();
-            System.out.println("Connected");
+            System.out.println("Connected to server.");
             generateMyAValue();
-            System.out.println("Generated A");
+            System.out.println("Generated A value.");
             sendRequestForKeys(output, input);
             RequestValues step2B = sendMyAValueAndWaitForB(output, input);
             calculateSecret(step2B);
+
+//---------------- INPUT DATA ------------------------
+            System.out.println("-------------------------------------------");
+            encryptionType = EncryptionType.none;
+            System.out.println(
+                    writeAndReadMessage(
+                            new Message(encryptMessage(encryptionType, "test none", secret.intValue()), "test client"),
+                            input,
+                            output));
+            System.out.println("-------------------------------------------");
+            encryptionType = EncryptionType.caesar;
+            System.out.println(
+                    writeAndReadMessage(
+                            new Message(encryptMessage(encryptionType, "test caesar", secret.intValue()), "test client"),
+                            input,
+                            output));
+            System.out.println("-------------------------------------------");
+            encryptionType = EncryptionType.xor;
+            System.out.println(
+                    writeAndReadMessage(
+                            new Message(encryptMessage(encryptionType, "test xor", secret.intValue()), "test client"),
+                            input,
+                            output));
+            System.out.println("-------------------------------------------");
+//---------------- /INPUT DATA ------------------------
+
         } catch (Exception e) {
             System.out.print("Something went wrong.!\n");
             e.printStackTrace();
@@ -48,20 +71,19 @@ public class Client {
     }
 
     private static void calculateSecret(RequestValues step2B) {
-//        step2B.setB(a); B sie nie ustawia
         secret = step2B.getB().modPow(a, p); // whats wrong here?
         System.out.println("Client secret: " + secret);
     }
 
     private static void generateMyAValue() {
         Random generator = new Random();
-        a = BigInteger.valueOf(generator.nextInt(16));
+        a = BigInteger.valueOf(generator.nextInt(40));
     }
 
     public static void sendRequestForKeys(OutputStream outputStream, InputStream inputStream) {
         Request step0 = new Request("keys");
         try {
-            String receivedJson = readJsonAndSendOne(inputStream, outputStream, new Gson().toJson(step0));
+            String receivedJson = readJsonAndSendAnswer(inputStream, outputStream, new Gson().toJson(step0));
             System.out.println(receivedJson);
             RequestValues step1 = new Gson().fromJson(receivedJson, RequestValues.class);
             p = step1.getP();
@@ -73,10 +95,10 @@ public class Client {
     }
 
     public static RequestValues sendMyAValueAndWaitForB(OutputStream output, InputStream input) throws SocketException {
-        RequestValues step2A = new RequestValues(g.modPow(a, p));
+        RequestValues step2A = new RequestValues(g.modPow(a, p), false);
         A = step2A.getA();
 
-        String msg = readJsonAndSendOne(input, output, gson.toJson(step2A));
+        String msg = readJsonAndSendAnswer(input, output, gson.toJson(step2A));
         RequestValues step2B = gson.fromJson(msg, RequestValues.class);
         System.out.println("Received : " + msg);
         return step2B;
@@ -85,11 +107,11 @@ public class Client {
 
     private static String writeAndReadMessage(Message message, InputStream input, OutputStream output) {
         try {
-            String json = readJsonAndSendOne(input, output, gson.toJson(message));
+            String json = readJsonAndSendAnswer(input, output, gson.toJson(message));
             Message receivedMessage = gson.fromJson(json, Message.class);
-            receivedMessage.setMsg(decryptMessage(encoding, receivedMessage.getMsg(), secret.intValue()));
+            receivedMessage.setMsg(decryptMessage(encryptionType, receivedMessage.getMsg(), secret.intValue()));
             if (receivedMessage.getMsg().isEmpty()) {
-                return "Nothing received";
+                return "Empty message";
             }
             return receivedMessage.toString();
         } catch (Exception e) {

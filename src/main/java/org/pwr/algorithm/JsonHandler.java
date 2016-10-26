@@ -9,7 +9,7 @@ import java.util.List;
  * Created by mkonczyk on 2016-10-25.
  */
 public class JsonHandler {
-    public static String readJsonAndSendOne(InputStream input, OutputStream output, String sendMsg) throws SocketException {
+    public static String readJsonAndSendAnswer(InputStream input, OutputStream output, String sendMsg) throws SocketException {
         List<Byte> bytes = new ArrayList<>();
         BufferedReader br = new BufferedReader(new InputStreamReader(input));
         String msg;
